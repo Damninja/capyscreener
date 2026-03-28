@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CapyArb — Crypto Price Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b0f;
+    --surface: #0e1318;
+    --surface2: #141b22;
+    --border: #1e2b35;
+    --accent: #00e5a0;
+    --accent2: #ff6b35;
+    --warn: #ffcc00;
+    --red: #ff4466;
+    --green: #00e5a0;
+    --text: #d4e8f0;
+    --muted: #4a6375;
+    --capy: #c8a87a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,160,0.015) 2px, rgba(0,229,160,0.015) 4px);
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* Grid bg */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 20px; }
+
+  /* HEADER */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .logo-capy {
+    font-size: 32px;
+    filter: drop-shadow(0 0 8px rgba(200,168,122,0.6));
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex; align-items: center; gap: 16px;
+  }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,229,160,0.08);
+    border: 1px solid rgba(0,229,160,0.3);
+    padding: 6px 12px; border-radius: 4px;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,229,160,0.4); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(0,229,160,0); }
+  }
+
+  .timestamp { color: var(--muted); font-size: 11px; }
+
+  /* TOP STATS BAR */
+  .stats-bar {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    position: relative; overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+
+  .stat-card.fg::before { background: linear-gradient(90deg, var(--accent2), var(--warn)); }
+  .stat-card.arb::before { background: linear-gradient(90deg, var(--accent), #00b8ff); }
+  .stat-card.gas::before { background: linear-gradient(90deg, var(--warn), var(--accent2)); }
+  .stat-card.whale::before { background: linear-gradient(90deg, #aa88ff, #ff6b9d); }
+
+  .stat-label {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 22px;
+    line-height: 1;
+  }
+
+  .stat-value.greed { color: var(--accent2); }
+  .stat-value.fear { color: var(--red); }
+  .stat-value.neutral { color: var(--warn); }
+
+  .stat-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 16px;
+  }
+
+  /* PRICE TABLE */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 13px;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .section-hint { font-size: 10px; color: var(--muted); }
+
+  .price-table { width: 100%; border-collapse: collapse; }
+
+  .price-table th {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); padding: 8px 12px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .price-table td {
+    padding: 12px 12px;
+    border-bottom: 1px solid rgba(30,43,53,0.5);
+    vertical-align: middle;
+  }
+
+  .price-table tr:hover td { background: rgba(0,229,160,0.03); }
+
+  .coin-name {
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .coin-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+
+  .coin-ticker {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 14px;
+  }
+
+  .coin-full { font-size: 10px; color: var(--muted); }
+
+  .exchange-prices {
+    display: flex; gap: 8px; align-items: center;
+  }
+
+  .ex-price {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    text-align: center;
+    min-width: 90px;
+    transition: border-color 0.3s;
+  }
+
+  .ex-price.best { border-color: rgba(0,229,160,0.4); }
+  .ex-price.worst { border-color: rgba(255,68,102,0.3); }
+
+  .ex-name { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+  .ex-val { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px; }
+
+  .arb-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 4px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.5px;
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  .arb-badge.hot {
+    background: rgba(0,229,160,0.15);
+    border: 1px solid rgba(0,229,160,0.5);
+    color: var(--accent);
+  }
+
+  .arb-badge.warm {
+    background: rgba(255,204,0,0.1);
+    border: 1px solid rgba(255,204,0,0.4);
+    color: var(--warn);
+  }
+
+  .arb-badge.cold {
+    background: rgba(74,99,117,0.2);
+    border: 1px solid rgba(74,99,117,0.3);
+    color: var(--muted);
+  }
+
+  @keyframes shimmer {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.75; }
+  }
+
+  .change {
+    font-size: 12px; font-weight: 700;
+  }
+  .change.up { color: var(--green); }
+  .change.down { color: var(--red); }
+
+  /* ARB ALERT BOX */
+  .arb-alert {
+    background: linear-gradient(135deg, rgba(0,229,160,0.08), rgba(0,229,160,0.02));
+    border: 1px solid rgba(0,229,160,0.3);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    position: relative; overflow: hidden;
+  }
+
+  .arb-alert::before {
+    content: '⚡ ARB OPPORTUNITY';
+    font-size: 9px; letter-spacing: 2px;
+    color: var(--accent);
+    display: block; margin-bottom: 8px;
+  }
+
+  .arb-alert-coin {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  .arb-alert-detail { font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .arb-alert-detail strong { color: var(--text); }
+
+  .arb-profit {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 20px;
+    color: var(--accent);
+    margin-top: 8px;
+  }
+
+  .arb-note { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* SIDEBAR PANELS */
+  .sidebar { display: flex; flex-direction: column; gap: 14px; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .panel-body { padding: 12px 14px; }
+
+  /* GAS TRACKER */
+  .gas-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(30,43,53,0.5);
+  }
+  .gas-row:last-child { border-bottom: none; }
+
+  .gas-speed { display: flex; align-items: center; gap: 8px; }
+  .gas-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .gas-dot.slow { background: var(--muted); }
+  .gas-dot.standard { background: var(--warn); }
+  .gas-dot.fast { background: var(--accent2); }
+  .gas-dot.instant { background: var(--accent); }
+
+  .gas-label { font-size: 11px; }
+  .gas-gwei { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px; }
+  .gas-usd { font-size: 10px; color: var(--muted); }
+
+  /* FUNDING RATES */
+  .funding-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(30,43,53,0.5);
+  }
+  .funding-row:last-child { border-bottom: none; }
+  .fr-coin { font-size: 12px; font-weight: 700; }
+  .fr-exchange { font-size: 10px; color: var(--muted); }
+  .fr-rate { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; }
+  .fr-rate.bull { color: var(--accent); }
+  .fr-rate.bear { color: var(--red); }
+
+  /* WHALE FEED */
+  .whale-item {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(30,43,53,0.5);
+    display: flex; gap: 10px;
+  }
+  .whale-item:last-child { border-bottom: none; }
+  .whale-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .whale-text { font-size: 11px; line-height: 1.5; color: var(--muted); }
+  .whale-text strong { color: var(--text); }
+  .whale-text .hl { color: var(--accent); }
+  .whale-text .hl-red { color: var(--red); }
+  .whale-time { font-size: 9px; color: var(--muted); display: block; margin-top: 2px; }
+
+  /* F&G METER */
+  .fg-meter {
+    position: relative;
+    height: 6px;
+    background: linear-gradient(90deg, #ff4466 0%, #ff6b35 30%, #ffcc00 50%, #7acc44 70%, #00e5a0 100%);
+    border-radius: 3px;
+    margin: 10px 0 8px;
+  }
+
+  .fg-needle {
+    position: absolute; top: -4px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: white;
+    border: 2px solid var(--bg);
+    transform: translateX(-50%);
+    box-shadow: 0 0 6px rgba(255,255,255,0.4);
+    transition: left 1s ease;
+  }
+
+  .fg-labels {
+    display: flex; justify-content: space-between;
+    font-size: 9px; color: var(--muted);
+  }
+
+  .fg-score {
+    text-align: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 36px;
+    color: var(--accent2);
+    line-height: 1;
+    margin: 6px 0 2px;
+  }
+
+  .fg-label-big {
+    text-align: center;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 8px;
+  }
+
+  /* FOOTER */
+  footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--muted); font-size: 10px;
+  }
+
+  .footer-capy { color: var(--capy); }
+
+  /* TICKER TAPE */
+  .ticker-wrap {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    padding: 8px 0;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .ticker-tape {
+    display: flex; gap: 40px;
+    animation: ticker 30s linear infinite;
+    white-space: nowrap;
+  }
+
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .ticker-item {
+    display: flex; gap: 6px; align-items: center;
+    font-size: 11px;
+  }
+
+  .ticker-sym { font-weight: 700; }
+  .ticker-price { color: var(--text); }
+  .ticker-chg.up { color: var(--green); }
+  .ticker-chg.dn { color: var(--red); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .exchange-prices { flex-wrap: wrap; }
+  }
+
+  @media (max-width: 500px) {
+    .stats-bar { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-capy">🦫</div>
+      <div>
+        <div class="logo-text">Capy<span>Arb</span></div>
+        <div class="logo-sub">Crypto Price Scanner</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="timestamp" id="clock">--:--:-- UTC</div>
+      <div class="live-badge"><div class="live-dot"></div> Live</div>
+    </div>
+  </header>
+
+  <!-- TICKER TAPE -->
+  <div class="ticker-wrap">
+    <div class="ticker-tape" id="ticker"></div>
+  </div>
+
+  <!-- TOP STATS -->
+  <div class="stats-bar">
+    <div class="stat-card fg">
+      <div class="stat-label">Fear & Greed Index</div>
+      <div class="stat-value greed" id="fg-val">72</div>
+      <div class="stat-sub" id="fg-label">Greed</div>
+    </div>
+    <div class="stat-card arb">
+      <div class="stat-label">Active Arb Gaps</div>
+      <div class="stat-value" id="arb-count" style="color:var(--accent)">3</div>
+      <div class="stat-sub">across tracked pairs</div>
+    </div>
+    <div class="stat-card gas">
+      <div class="stat-label">ETH Gas (Standard)</div>
+      <div class="stat-value" id="gas-std" style="color:var(--warn)">18 gwei</div>
+      <div class="stat-sub" id="gas-std-usd">≈ $1.12 / swap</div>
+    </div>
+    <div class="stat-card whale">
+      <div class="stat-label">Whale Alerts (24h)</div>
+      <div class="stat-value" style="color:#aa88ff" id="whale-count">7</div>
+      <div class="stat-sub">transactions &gt; $1M</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- LEFT: Price Table -->
+    <div>
+      <div id="arb-alert-zone"></div>
+
+      <div class="section-header">
+        <div class="section-title">// Exchange Price Comparison</div>
+        <div class="section-hint">Best price highlighted</div>
+      </div>
+
+      <table class="price-table" id="price-table">
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Coinbase</th>
+            <th>Binance</th>
+            <th>Kraken</th>
+            <th>Gap</th>
+            <th>24h</th>
+          </tr>
+        </thead>
+        <tbody id="price-body"></tbody>
+      </table>
+
+      <div style="margin-top:20px;">
+        <div class="section-header">
+          <div class="section-title">// Spread Analysis</div>
+          <div class="section-hint">Max spread as % of mid price</div>
+        </div>
+        <div id="spread-bars" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Sidebar -->
+    <div class="sidebar">
+
+      <!-- Fear & Greed Meter -->
+      <div class="panel">
+        <div class="panel-header">Fear & Greed <span id="fg-updated" style="color:var(--muted)">updated 1h ago</span></div>
+        <div class="panel-body">
+          <div class="fg-score" id="fg-big">72</div>
+          <div class="fg-label-big" id="fg-big-label">Greed</div>
+          <div class="fg-meter">
+            <div class="fg-needle" id="fg-needle" style="left:72%"></div>
+          </div>
+          <div class="fg-labels">
+            <span>Extreme Fear</span>
+            <span>Extreme Greed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gas Tracker -->
+      <div class="panel">
+        <div class="panel-header">ETH Gas Tracker <span id="gas-refresh" style="color:var(--muted)">live</span></div>
+        <div class="panel-body" id="gas-body">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <!-- Funding Rates -->
+      <div class="panel">
+        <div class="panel-header">Perp Funding Rates <span style="color:var(--muted)">8h interval</span></div>
+        <div class="panel-body" id="funding-body"></div>
+      </div>
+
+      <!-- Whale Alerts -->
+      <div class="panel">
+        <div class="panel-header">Whale Alerts <span style="color:var(--muted)">recent txns</span></div>
+        <div class="panel-body" id="whale-body"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <div>CapyArb — Prices are simulated for demo purposes. Not financial advice.</div>
+    <div class="footer-capy">🦫 Stay calm and arb on.</div>
+  </footer>
+</div>
+
+<script>
+// ─── DATA ENGINE ───────────────────────────────────────────────
+const COINS = [
+  { sym: 'BTC', name: 'Bitcoin', icon: '₿', base: 67400 },
+  { sym: 'ETH', name: 'Ethereum', icon: 'Ξ', base: 3510 },
+  { sym: 'SOL', name: 'Solana', icon: '◎', base: 178 },
+  { sym: 'BNB', name: 'BNB', icon: 'B', base: 605 },
+  { sym: 'XRP', name: 'Ripple', icon: 'X', base: 0.612 },
+  { sym: 'DOGE', name: 'Dogecoin', icon: 'Ð', base: 0.158 },
+];
+
+const EXCHANGES = ['Coinbase', 'Binance', 'Kraken'];
+
+let prices = {};
+let changes = {};
+let gasPrices = { slow: 12, standard: 18, fast: 28, instant: 48 };
+let fgIndex = 72;
+let whaleLog = [];
+
+// Simulate realistic price spreads
+function initPrices() {
+  COINS.forEach(c => {
+    const drift = 1 + (Math.random() - 0.5) * 0.002;
+    prices[c.sym] = {
+      Coinbase: c.base * drift,
+      Binance: c.base * (drift + (Math.random() - 0.5) * 0.003),
+      Kraken: c.base * (drift + (Math.random() - 0.5) * 0.003),
+    };
+    changes[c.sym] = (Math.random() - 0.45) * 8;
+  });
+}
+
+function tickPrices() {
+  COINS.forEach(c => {
+    EXCHANGES.forEach(ex => {
+      const move = 1 + (Math.random() - 0.5) * 0.001;
+      prices[c.sym][ex] *= move;
+    });
+    changes[c.sym] += (Math.random() - 0.5) * 0.2;
+    changes[c.sym] = Math.max(-15, Math.min(15, changes[c.sym]));
+  });
+  // Occasionally create bigger spread for drama
+  if (Math.random() < 0.05) {
+    const coin = COINS[Math.floor(Math.random() * COINS.length)];
+    const ex = EXCHANGES[Math.floor(Math.random() * EXCHANGES.length)];
+    prices[coin.sym][ex] *= 1 + (Math.random() * 0.006 + 0.002);
+  }
+  // Gas drift
+  gasPrices.slow = Math.max(5, gasPrices.slow + (Math.random()-0.5)*2);
+  gasPrices.standard = Math.max(10, gasPrices.standard + (Math.random()-0.5)*3);
+  gasPrices.fast = Math.max(gasPrices.standard+5, gasPrices.fast + (Math.random()-0.5)*4);
+  gasPrices.instant = Math.max(gasPrices.fast+5, gasPrices.instant + (Math.random()-0.5)*5);
+
+  // F&G slow drift
+  fgIndex += (Math.random()-0.5)*0.5;
+  fgIndex = Math.max(10, Math.min(95, fgIndex));
+}
+
+function getSpread(sym) {
+  const vals = Object.values(prices[sym]);
+  return (Math.max(...vals) - Math.min(...vals)) / Math.min(...vals) * 100;
+}
+
+function getBest(sym) {
+  return Object.entries(prices[sym]).sort((a,b) => a[1]-b[1])[0][0]; // cheapest
+}
+
+function getWorst(sym) {
+  return Object.entries(prices[sym]).sort((a,b) => b[1]-a[1])[0][0]; // priciest
+}
+
+// ─── RENDERERS ───────────────────────────────────────────────
+
+function fmt(price) {
+  if (price >= 10000) return '$' + price.toLocaleString('en', {maximumFractionDigits:0});
+  if (price >= 100) return '$' + price.toFixed(2);
+  if (price >= 1) return '$' + price.toFixed(3);
+  return '$' + price.toFixed(4);
+}
+
+function renderPriceTable() {
+  const tbody = document.getElementById('price-body');
+  tbody.innerHTML = '';
+  let arbCount = 0;
+
+  COINS.forEach(c => {
+    const spread = getSpread(c.sym);
+    const best = getBest(c.sym);
+    const worst = getWorst(c.sym);
+    const chg = changes[c.sym];
+    if (spread > 0.1) arbCount++;
+
+    const arbClass = spread > 0.25 ? 'hot' : spread > 0.1 ? 'warm' : 'cold';
+    const arbLabel = spread > 0.25 ? `⚡ ${spread.toFixed(3)}%` : spread > 0.1 ? `↔ ${spread.toFixed(3)}%` : `${spread.toFixed(3)}%`;
+
+    const exCells = EXCHANGES.map(ex => {
+      let cls = '';
+      if (ex === best) cls = 'best';
+      else if (ex === worst) cls = 'worst';
+      return `<div class="ex-price ${cls}">
+        <div class="ex-name">${ex.substring(0,3).toUpperCase()}</div>
+        <div class="ex-val">${fmt(prices[c.sym][ex])}</div>
+      </div>`;
+    }).join('');
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>
+        <div class="coin-name">
+          <div class="coin-icon">${c.icon}</div>
+          <div>
+            <div class="coin-ticker">${c.sym}</div>
+            <div class="coin-full">${c.name}</div>
+          </div>
+        </div>
+      </td>
+      <td colspan="3"><div class="exchange-prices">${exCells}</div></td>
+      <td><div class="arb-badge ${arbClass}">${arbLabel}</div></td>
+      <td><div class="change ${chg>=0?'up':'down'}">${chg>=0?'+':''}${chg.toFixed(2)}%</div></td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  document.getElementById('arb-count').textContent = arbCount;
+}
+
+function renderArbAlert() {
+  const zone = document.getElementById('arb-alert-zone');
+  // Find biggest spread
+  let biggestSpread = 0, biggestCoin = null;
+  COINS.forEach(c => {
+    const s = getSpread(c.sym);
+    if (s > biggestSpread) { biggestSpread = s; biggestCoin = c; }
+  });
+
+  if (biggestSpread > 0.15 && biggestCoin) {
+    const buyEx = getBest(biggestCoin.sym);
+    const sellEx = getWorst(biggestCoin.sym);
+    const buyP = prices[biggestCoin.sym][buyEx];
+    const sellP = prices[biggestCoin.sym][sellEx];
+    const profitPerUnit = sellP - buyP;
+
+    zone.innerHTML = `
+      <div class="arb-alert">
+        <div class="arb-alert-coin">${biggestCoin.icon} ${biggestCoin.sym} Arbitrage Window</div>
+        <div class="arb-alert-detail">
+          Buy on <strong>${buyEx}</strong> @ ${fmt(buyP)} → Sell on <strong>${sellEx}</strong> @ ${fmt(sellP)}<br>
+          Spread: <strong>${biggestSpread.toFixed(4)}%</strong> · Est. profit: <strong>${fmt(profitPerUnit)}</strong> per unit
+        </div>
+        <div class="arb-profit">+${fmt(profitPerUnit * (biggestCoin.base > 1000 ? 0.1 : biggestCoin.base > 10 ? 1 : 100))} est. on 0.1 BTC equiv.</div>
+        <div class="arb-note">⚠ Factor in exchange fees (0.1–0.5%) and transfer time before acting.</div>
+      </div>
+    `;
+  } else {
+    zone.innerHTML = '';
+  }
+}
+
+function renderGas() {
+  const body = document.getElementById('gas-body');
+  const ethPrice = prices['ETH'] ? prices['ETH']['Coinbase'] : 3500;
+  const gasData = [
+    { key: 'slow', label: 'Slow', cls: 'slow', eta: '~5 min' },
+    { key: 'standard', label: 'Standard', cls: 'standard', eta: '~2 min' },
+    { key: 'fast', label: 'Fast', cls: 'fast', eta: '~30 sec' },
+    { key: 'instant', label: 'Instant', cls: 'instant', eta: '~10 sec' },
+  ];
+  body.innerHTML = gasData.map(g => {
+    const gwei = Math.round(gasPrices[g.key]);
+    const usd = (gwei * 21000 * 1e-9 * ethPrice).toFixed(2);
+    return `<div class="gas-row">
+      <div class="gas-speed">
+        <div class="gas-dot ${g.cls}"></div>
+        <div class="gas-label">${g.label} <span style="color:var(--muted);font-size:10px">${g.eta}</span></div>
+      </div>
+      <div>
+        <div class="gas-gwei">${gwei} gwei</div>
+        <div class="gas-usd">≈ $${usd}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('gas-std').textContent = `${Math.round(gasPrices.standard)} gwei`;
+  const usdStd = (gasPrices.standard * 21000 * 1e-9 * (prices['ETH']?.Coinbase || 3500)).toFixed(2);
+  document.getElementById('gas-std-usd').textContent = `≈ $${usdStd} / swap`;
+}
+
+function renderFunding() {
+  const fundingRates = [
+    { coin: 'BTC', ex: 'Binance', rate: 0.0085 + (Math.random()-0.5)*0.003, bull: true },
+    { coin: 'ETH', ex: 'Binance', rate: 0.0072 + (Math.random()-0.5)*0.002, bull: true },
+    { coin: 'SOL', ex: 'Bybit', rate: 0.012 + (Math.random()-0.5)*0.005, bull: true },
+    { coin: 'BNB', ex: 'Binance', rate: -0.003 + (Math.random()-0.5)*0.002, bull: false },
+    { coin: 'DOGE', ex: 'OKX', rate: 0.025 + (Math.random()-0.5)*0.008, bull: true },
+  ];
+  const body = document.getElementById('funding-body');
+  body.innerHTML = fundingRates.map(f => `
+    <div class="funding-row">
+      <div>
+        <div class="fr-coin">${f.coin}</div>
+        <div class="fr-exchange">${f.ex}</div>
+      </div>
+      <div class="fr-rate ${f.rate>0?'bull':'bear'}">${f.rate>0?'+':''}${f.rate.toFixed(4)}%</div>
+    </div>
+  `).join('');
+}
+
+function renderWhales() {
+  const whales = [
+    { icon: '🐋', text: '<strong>3,420 BTC</strong> (~$<span class="hl">$230M</span>) moved from unknown wallet → Coinbase', time: '2m ago' },
+    { icon: '🔴', text: '<strong>18,000 ETH</strong> transferred to <span class="hl-red">Binance</span> — possible sell pressure', time: '7m ago' },
+    { icon: '🟢', text: '<strong>$45M USDC</strong> minted on Ethereum — <span class="hl">bullish signal</span>', time: '14m ago' },
+    { icon: '🐋', text: '<strong>1,200 BTC</strong> moved off Kraken to cold storage', time: '22m ago' },
+    { icon: '🔴', text: '<strong>8,500 SOL</strong> moved to <span class="hl-red">exchange</span> — watch for dump', time: '31m ago' },
+  ];
+  const body = document.getElementById('whale-body');
+  body.innerHTML = whales.map(w => `
+    <div class="whale-item">
+      <div class="whale-icon">${w.icon}</div>
+      <div>
+        <div class="whale-text">${w.text}</div>
+        <span class="whale-time">${w.time}</span>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('whale-count').textContent = whales.length + Math.floor(Math.random()*3);
+}
+
+function renderFG() {
+  const score = Math.round(fgIndex);
+  let label, color;
+  if (score < 25) { label = 'Extreme Fear'; color = 'var(--red)'; }
+  else if (score < 45) { label = 'Fear'; color = 'var(--accent2)'; }
+  else if (score < 55) { label = 'Neutral'; color = 'var(--warn)'; }
+  else if (score < 75) { label = 'Greed'; color = 'var(--accent2)'; }
+  else { label = 'Extreme Greed'; color = '#ff6b35'; }
+
+  document.getElementById('fg-val').textContent = score;
+  document.getElementById('fg-val').style.color = color;
+  document.getElementById('fg-label').textContent = label;
+  document.getElementById('fg-big').textContent = score;
+  document.getElementById('fg-big').style.color = color;
+  document.getElementById('fg-big-label').textContent = label;
+  document.getElementById('fg-big-label').style.color = color;
+  document.getElementById('fg-needle').style.left = score + '%';
+}
+
+function renderSpreadBars() {
+  const container = document.getElementById('spread-bars');
+  container.innerHTML = '';
+  const sorted = [...COINS].sort((a,b) => getSpread(b.sym) - getSpread(a.sym));
+  sorted.forEach(c => {
+    const spread = getSpread(c.sym);
+    const pct = Math.min(100, spread * 200); // scale for visual
+    const color = spread > 0.25 ? 'var(--accent)' : spread > 0.1 ? 'var(--warn)' : 'var(--muted)';
+    container.innerHTML += `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:40px;font-weight:700;font-size:11px;">${c.sym}</div>
+        <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;transition:width 0.5s ease;"></div>
+        </div>
+        <div style="width:60px;text-align:right;font-size:11px;color:${color};">${spread.toFixed(4)}%</div>
+      </div>
+    `;
+  });
+}
+
+function renderTicker() {
+  const el = document.getElementById('ticker');
+  const items = COINS.map(c => {
+    const price = prices[c.sym]['Coinbase'];
+    const chg = changes[c.sym];
+    return `<span class="ticker-item"><span class="ticker-sym">${c.sym}</span><span class="ticker-price">${fmt(price)}</span><span class="ticker-chg ${chg>=0?'up':'dn'}">${chg>=0?'▲':'▼'}${Math.abs(chg).toFixed(2)}%</span></span>`;
+  }).join('');
+  // Double it for seamless loop
+  el.innerHTML = items + items;
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toUTCString().split(' ')[4] + ' UTC';
+}
+
+// ─── INIT & LOOP ───────────────────────────────────────────────
+initPrices();
+
+function renderAll() {
+  renderPriceTable();
+  renderArbAlert();
+  renderGas();
+  renderFG();
+  renderSpreadBars();
+  renderTicker();
+}
+
+renderAll();
+renderFunding();
+renderWhales();
+
+setInterval(() => {
+  tickPrices();
+  renderAll();
+  updateClock();
+}, 2000);
+
+setInterval(() => {
+  renderFunding();
+}, 30000);
+
+setInterval(() => {
+  renderWhales();
+}, 60000);
+
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+</body>
+</html>
