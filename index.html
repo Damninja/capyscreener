@@ -829,15 +829,15 @@ function renderWhales() {
   document.getElementById('whale-count').textContent = whales.length + Math.floor(Math.random()*3);
 }
 
-function renderFG() {
-  const score = Math.round(fgIndex);
-  let label, color;
-  if (score < 25) { label = 'Extreme Fear'; color = 'var(--red)'; }
-  else if (score < 45) { label = 'Fear'; color = 'var(--accent2)'; }
-  else if (score < 55) { label = 'Neutral'; color = 'var(--warn)'; }
-  else if (score < 75) { label = 'Greed'; color = 'var(--accent2)'; }
-  else { label = 'Extreme Greed'; color = '#ff6b35'; }
+function applyFG(score, label) {
+  let color;
+  if (score < 25) { color = 'var(--red)'; }
+  else if (score < 45) { color = 'var(--accent2)'; }
+  else if (score < 55) { color = 'var(--warn)'; }
+  else if (score < 75) { color = 'var(--accent2)'; }
+  else { color = '#ff6b35'; }
 
+  fgIndex = score;
   document.getElementById('fg-val').textContent = score;
   document.getElementById('fg-val').style.color = color;
   document.getElementById('fg-label').textContent = label;
@@ -846,6 +846,31 @@ function renderFG() {
   document.getElementById('fg-big-label').textContent = label;
   document.getElementById('fg-big-label').style.color = color;
   document.getElementById('fg-needle').style.left = score + '%';
+  document.getElementById('fg-updated').textContent = 'live data';
+}
+
+function renderFG() {
+  // Just re-apply current fgIndex value (used during tick)
+  const score = Math.round(fgIndex);
+  let label;
+  if (score < 25) label = 'Extreme Fear';
+  else if (score < 45) label = 'Fear';
+  else if (score < 55) label = 'Neutral';
+  else if (score < 75) label = 'Greed';
+  else label = 'Extreme Greed';
+  applyFG(score, label);
+}
+
+async function fetchRealFG() {
+  try {
+    const res = await fetch('https://fng-proxy.kylekylechodosh.workers.dev');
+    const data = await res.json();
+    const score = parseInt(data.data[0].value);
+    const label = data.data[0].value_classification;
+    applyFG(score, label);
+  } catch (e) {
+    console.warn('F&G fetch failed, using simulated value', e);
+  }
 }
 
 function renderSpreadBars() {
@@ -899,6 +924,10 @@ function renderAll() {
 renderAll();
 renderFunding();
 renderWhales();
+
+// Fetch real Fear & Greed immediately, then every 5 minutes
+fetchRealFG();
+setInterval(fetchRealFG, 5 * 60 * 1000);
 
 setInterval(() => {
   tickPrices();
