@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CapyArb — Funding Rate Arbitrage</title>
+<meta name="description" content="Live funding rate arbitrage opportunities. Earn 10-50% APY with delta-neutral crypto strategies. Step-by-step guides for US traders.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b0f;
+    --surface: #0e1318;
+    --surface2: #141b22;
+    --surface3: #1a2430;
+    --border: #1e2b35;
+    --accent: #00e5a0;
+    --accent2: #ff6b35;
+    --warn: #ffcc00;
+    --red: #ff4466;
+    --green: #00e5a0;
+    --blue: #00b8ff;
+    --text: #d4e8f0;
+    --muted: #4a6375;
+    --capy: #c8a87a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Space Mono', monospace; font-size: 13px;
+    min-height: 100vh; overflow-x: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,160,0.012) 2px, rgba(0,229,160,0.012) 4px);
+    pointer-events: none; z-index: 200;
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(0,229,160,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,160,0.025) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+  .wrap { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+  /* HEADER */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 32px;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .logo-capy { font-size: 28px; filter: drop-shadow(0 0 8px rgba(200,168,122,0.5)); animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--text); }
+  .logo-text span { color: var(--accent); }
+  .logo-sub { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .nav { display: flex; gap: 4px; }
+  .nav-link {
+    padding: 6px 14px; border-radius: 4px; border: 1px solid var(--border);
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted); text-decoration: none; transition: all 0.2s;
+  }
+  .nav-link:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,229,160,0.05); }
+  .nav-link.active { border-color: rgba(0,229,160,0.4); color: var(--accent); background: rgba(0,229,160,0.08); }
+
+  /* HERO */
+  .hero { text-align: center; padding: 40px 20px 48px; }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.25);
+    padding: 6px 16px; border-radius: 20px;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 20px;
+  }
+  .hero-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(0,229,160,0.4); } 50% { opacity:0.7; box-shadow:0 0 0 6px rgba(0,229,160,0); } }
+  .hero h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(26px,5vw,46px); line-height: 1.1; margin-bottom: 16px; letter-spacing: -1px; }
+  .hero h1 .hl { color: var(--accent); }
+  .hero h1 .hl2 { color: var(--warn); }
+  .hero-sub { font-size: 14px; color: var(--muted); line-height: 1.7; max-width: 560px; margin: 0 auto 32px; }
+  .hero-stats { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; }
+  .hero-stat { text-align: center; }
+  .hero-stat-val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; color: var(--accent); display: block; line-height: 1; }
+  .hero-stat-val.warn { color: var(--warn); }
+  .hero-stat-val.blue { color: var(--blue); }
+  .hero-stat-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; display: block; }
+
+  /* EXPLAINER STRIP */
+  .explainer { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 40px; }
+  .ex-step { background: var(--surface); padding: 24px 20px; position: relative; }
+  .ex-step::after { content: attr(data-arrow); position: absolute; right: -12px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--accent); z-index: 2; }
+  .ex-step:last-child::after { display: none; }
+  .ex-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 36px; color: rgba(0,229,160,0.12); line-height: 1; margin-bottom: 8px; }
+  .ex-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 8px; }
+  .ex-desc { font-size: 11px; color: var(--muted); line-height: 1.7; }
+  .ex-desc strong { color: var(--accent); }
+
+  /* SECTION HEADERS */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
+  .section-hint { font-size: 10px; color: var(--muted); }
+
+  /* RATE CARDS */
+  .rate-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 12px; margin-bottom: 40px; }
+  .rate-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color 0.3s, transform 0.2s; cursor: pointer; }
+  .rate-card:hover { border-color: rgba(0,229,160,0.3); transform: translateY(-2px); }
+  .rate-card.hot { border-color: rgba(0,229,160,0.35); }
+  .rate-card.warm { border-color: rgba(255,204,0,0.3); }
+  .rate-card-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+  .rate-coin { display: flex; align-items: center; gap: 10px; }
+  .rate-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 15px; font-family: 'Syne', sans-serif; font-weight: 700; }
+  .rate-sym { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; }
+  .rate-name { font-size: 10px; color: var(--muted); }
+  .rate-apy { text-align: right; }
+  .rate-apy-val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; color: var(--accent); line-height: 1; }
+  .rate-apy-val.warn { color: var(--warn); }
+  .rate-apy-val.cold { color: var(--muted); }
+  .rate-apy-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .rate-card-body { padding: 12px 16px; }
+  .rate-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(30,43,53,0.4); font-size: 11px; }
+  .rate-row:last-child { border-bottom: none; }
+  .rate-exname { color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .rate-exname .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+  .rate-exname .dot.green { background: var(--accent); }
+  .rate-exname .dot.yellow { background: var(--warn); }
+  .rate-exname .dot.blue { background: var(--blue); }
+  .rate-val { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 12px; }
+  .rate-val.bull { color: var(--accent); }
+  .rate-val.bear { color: var(--red); }
+  .rate-card-footer { background: var(--surface2); padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; }
+  .trade-btn { padding: 4px 12px; border-radius: 3px; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; font-family: 'Space Mono', monospace; border: 1px solid rgba(0,229,160,0.4); color: var(--accent); background: rgba(0,229,160,0.06); cursor: pointer; transition: all 0.2s; }
+  .trade-btn:hover { background: rgba(0,229,160,0.15); }
+
+  /* CALCULATOR */
+  .calculator { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 40px; }
+  .calc-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .calc-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
+  .calc-body { display: grid; grid-template-columns: 1fr 1fr; }
+  .calc-inputs { padding: 24px; border-right: 1px solid var(--border); }
+  .calc-outputs { padding: 24px; }
+  .input-group { margin-bottom: 18px; }
+  .input-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; }
+  .input-row { display: flex; align-items: center; gap: 8px; }
+  .calc-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; font-family: 'Space Mono', monospace; font-size: 14px; color: var(--text); width: 100%; outline: none; transition: border-color 0.2s; }
+  .calc-input:focus { border-color: rgba(0,229,160,0.4); }
+  .input-unit { font-size: 11px; color: var(--muted); white-space: nowrap; min-width: 32px; }
+  .calc-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text); width: 100%; outline: none; cursor: pointer; }
+  .output-metric { margin-bottom: 16px; }
+  .output-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .output-val { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 28px; color: var(--accent); line-height: 1; }
+  .output-val.warn { color: var(--warn); }
+  .output-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .output-breakdown { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 12px; margin-top: 12px; }
+  .breakdown-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid rgba(30,43,53,0.4); }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-label { color: var(--muted); }
+  .breakdown-val { font-weight: 700; }
+  .breakdown-val.pos { color: var(--accent); }
+  .breakdown-val.neg { color: var(--red); }
+
+  /* GUIDE */
+  .guide-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+  .guide-tab { padding: 10px 20px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border: 1px solid transparent; border-bottom: none; border-radius: 4px 4px 0 0; color: var(--muted); background: transparent; font-family: 'Space Mono', monospace; transition: all 0.2s; position: relative; bottom: -1px; }
+  .guide-tab:hover { color: var(--text); }
+  .guide-tab.active { color: var(--accent); border-color: var(--border); background: var(--surface); border-bottom-color: var(--surface); }
+  .guide-panel { display: none; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 4px 4px 4px; padding: 32px; }
+  .guide-panel.active { display: block; }
+  .guide-intro { font-size: 12px; color: var(--muted); line-height: 1.8; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .guide-intro strong { color: var(--text); }
+  .guide-intro .hl { color: var(--accent); }
+  .steps { display: flex; flex-direction: column; }
+  .step { display: grid; grid-template-columns: 48px 1fr; }
+  .step-left { display: flex; flex-direction: column; align-items: center; }
+  .step-num { width: 36px; height: 36px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--accent); flex-shrink: 0; z-index: 1; transition: all 0.3s; }
+  .step:hover .step-num { background: rgba(0,229,160,0.1); border-color: rgba(0,229,160,0.5); }
+  .step-line { width: 2px; flex: 1; min-height: 20px; background: var(--border); margin: 4px 0; }
+  .step:last-child .step-line { display: none; }
+  .step-content { padding: 0 0 28px 20px; }
+  .step-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 8px; padding-top: 6px; }
+  .step-body { font-size: 12px; color: var(--muted); line-height: 1.8; }
+  .step-body strong { color: var(--text); }
+  .step-body .hl { color: var(--accent); }
+  .step-callout { background: var(--surface2); border-left: 3px solid var(--accent); padding: 12px 16px; border-radius: 0 4px 4px 0; margin-top: 12px; font-size: 11px; line-height: 1.7; }
+  .step-callout.warn { border-left-color: var(--warn); }
+  .step-callout.red { border-left-color: var(--red); }
+  .step-callout-title { font-weight: 700; color: var(--accent); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+  .step-callout.warn .step-callout-title { color: var(--warn); }
+  .step-callout.red .step-callout-title { color: var(--red); }
+  .affiliate-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.25); padding: 6px 12px; border-radius: 4px; font-size: 10px; color: var(--accent); text-decoration: none; margin-top: 10px; transition: all 0.2s; }
+  .affiliate-badge:hover { background: rgba(0,229,160,0.15); }
+
+  /* RISK */
+  .risk-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 40px; }
+  .risk-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .risk-icon { font-size: 24px; margin-bottom: 10px; }
+  .risk-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+  .risk-title.green { color: var(--accent); }
+  .risk-title.yellow { color: var(--warn); }
+  .risk-title.red { color: var(--red); }
+  .risk-desc { font-size: 11px; color: var(--muted); line-height: 1.7; }
+
+  .loading-pulse { display: inline-block; background: var(--surface2); border-radius: 3px; animation: loadpulse 1.5s ease-in-out infinite; }
+  @keyframes loadpulse { 0%,100% { opacity:0.4; } 50% { opacity:0.8; } }
+
+  footer { margin-top: 40px; padding: 20px 0; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 10px; flex-wrap: wrap; gap: 8px; }
+  .footer-capy { color: var(--capy); }
+
+  @media (max-width: 768px) {
+    .explainer { grid-template-columns: 1fr; }
+    .calc-body { grid-template-columns: 1fr; }
+    .calc-inputs { border-right: none; border-bottom: 1px solid var(--border); }
+    .risk-grid { grid-template-columns: 1fr; }
+    .rate-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 20px; }
+  }
+  @media (max-width: 500px) { .nav { display: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <a href="index.html" class="logo">
+      <div class="logo-capy">🦫</div>
+      <div>
+        <div class="logo-text">Capy<span>Arb</span></div>
+        <div class="logo-sub">Crypto Price Scanner</div>
+      </div>
+    </a>
+    <nav class="nav">
+      <a href="index.html" class="nav-link">Price Scanner</a>
+      <a href="funding-arb.html" class="nav-link active">Funding Arb</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div class="hero-eyebrow"><div class="hero-dot"></div>Delta-Neutral Strategy · Live Funding Rates</div>
+    <h1>Earn <span class="hl" id="hero-apy">10–50%</span> APY<br>with <span class="hl2">zero directional risk</span></h1>
+    <p class="hero-sub">Funding rate arbitrage lets you collect exchange payments every 8 hours — without betting on whether crypto goes up or down. Here's exactly how to do it.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-val" id="hero-best-rate">—</span>
+        <span class="hero-stat-label">Best Rate (Ann.)</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-val warn">8h</span>
+        <span class="hero-stat-label">Payment Interval</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-val blue" id="hero-opportunities">—</span>
+        <span class="hero-stat-label">Active Opportunities</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="explainer">
+    <div class="ex-step" data-arrow="→">
+      <div class="ex-num">01</div>
+      <div class="ex-title">Buy Spot</div>
+      <div class="ex-desc">Buy <strong>1 BTC</strong> on Coinbase or Kraken. This is your hedge — you actually own the asset.</div>
+    </div>
+    <div class="ex-step" data-arrow="→">
+      <div class="ex-num">02</div>
+      <div class="ex-title">Short the Perp</div>
+      <div class="ex-desc">Open a <strong>1 BTC short</strong> on a perp exchange. Price movements cancel out — you're delta-neutral.</div>
+    </div>
+    <div class="ex-step" data-arrow="">
+      <div class="ex-num">03</div>
+      <div class="ex-title">Collect Funding</div>
+      <div class="ex-desc">Every 8 hours, longs pay shorts. You collect <strong>0.01–0.05%</strong> per interval — pure yield, no price risk.</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title">// Live Funding Rates</div>
+    <div class="section-hint" id="rates-updated">Fetching live data…</div>
+  </div>
+  <div class="rate-grid" id="rate-grid">
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-size:12px;">
+      <div class="loading-pulse" style="width:120px;height:12px;margin:0 auto 8px;"></div>
+      Connecting to exchange APIs…
+    </div>
+  </div>
+
+  <div class="calculator">
+    <div class="calc-header">
+      <div class="calc-title">// Yield Calculator</div>
+      <div style="font-size:10px;color:var(--muted)">Click any rate card above to auto-fill</div>
+    </div>
+    <div class="calc-body">
+      <div class="calc-inputs">
+        <div class="input-group">
+          <label class="input-label">Position Size</label>
+          <div class="input-row">
+            <input type="number" class="calc-input" id="calc-size" value="10000" min="100" step="1000">
+            <span class="input-unit">USD</span>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Funding Rate (per 8h)</label>
+          <div class="input-row">
+            <input type="number" class="calc-input" id="calc-rate" value="0.0100" min="0" step="0.001">
+            <span class="input-unit">%</span>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Asset</label>
+          <select class="calc-select" id="calc-asset">
+            <option value="BTC">Bitcoin (BTC)</option>
+            <option value="ETH">Ethereum (ETH)</option>
+            <option value="SOL">Solana (SOL)</option>
+            <option value="BNB">BNB</option>
+            <option value="DOGE">Dogecoin (DOGE)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Spot Exchange Fee (taker)</label>
+          <div class="input-row">
+            <input type="number" class="calc-input" id="calc-spot-fee" value="0.60" min="0" step="0.05">
+            <span class="input-unit">%</span>
+          </div>
+        </div>
+        <div class="input-group" style="margin-bottom:0">
+          <label class="input-label">Perp Exchange Fee (taker)</label>
+          <div class="input-row">
+            <input type="number" class="calc-input" id="calc-perp-fee" value="0.05" min="0" step="0.01">
+            <span class="input-unit">%</span>
+          </div>
+        </div>
+      </div>
+      <div class="calc-outputs">
+        <div class="output-metric">
+          <div class="output-label">Annualized Yield (Gross)</div>
+          <div class="output-val" id="out-apy">—</div>
+          <div class="output-sub">Before fees and slippage</div>
+        </div>
+        <div class="output-metric">
+          <div class="output-label">Annualized Yield (Net)</div>
+          <div class="output-val warn" id="out-net-apy">—</div>
+          <div class="output-sub">After estimated fees</div>
+        </div>
+        <div class="output-breakdown">
+          <div class="breakdown-row"><span class="breakdown-label">Daily earnings</span><span class="breakdown-val pos" id="out-daily">—</span></div>
+          <div class="breakdown-row"><span class="breakdown-label">Monthly earnings</span><span class="breakdown-val pos" id="out-monthly">—</span></div>
+          <div class="breakdown-row"><span class="breakdown-label">Annual earnings (gross)</span><span class="breakdown-val pos" id="out-annual">—</span></div>
+          <div class="breakdown-row"><span class="breakdown-label">Total entry fees</span><span class="breakdown-val neg" id="out-fees">—</span></div>
+          <div class="breakdown-row"><span class="breakdown-label">Break-even (days)</span><span class="breakdown-val" id="out-breakeven" style="color:var(--blue)">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:40px;">
+    <div class="section-header">
+      <div class="section-title">// Step-by-Step Execution Guide</div>
+      <div class="section-hint">US-friendly exchanges only</div>
+    </div>
+    <div class="guide-tabs">
+      <button class="guide-tab active" onclick="switchTab(this,'guide-btc')">BTC Strategy</button>
+      <button class="guide-tab" onclick="switchTab(this,'guide-eth')">ETH Strategy</button>
+      <button class="guide-tab" onclick="switchTab(this,'guide-sol')">SOL Strategy</button>
+    </div>
+
+    <div class="guide-panel active" id="guide-btc">
+      <div class="guide-intro">
+        The BTC funding rate strategy is the most liquid and lowest-risk version of this trade. You earn funding payments every 8 hours from perpetual futures traders who are paying to stay long BTC. When sentiment is bullish, this rate spikes — sometimes to <span class="hl">0.05–0.1% per 8h (65%+ APY)</span>. Your BTC spot position hedges all price exposure. <strong>You do not care if BTC goes up or down.</strong>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-left"><div class="step-num">1</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Open a Coinbase Advanced account</div>
+            <div class="step-body">
+              Coinbase is the best US-regulated spot exchange for this strategy. Complete KYC and fund with USD. Use <strong>Coinbase Advanced</strong> — fees are 0.4–0.6% vs 1.5%+ on the basic app.
+              <div class="step-callout"><div class="step-callout-title">💡 Why Coinbase</div>FDIC-insured USD, strong regulatory standing, excellent BTC/USD liquidity. Best choice for the spot leg of this trade for US users.</div>
+              <a href="#" class="affiliate-badge">Open Coinbase Account →</a>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">2</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Open a Kraken account for perp trading</div>
+            <div class="step-body">
+              For US users, Kraken Futures is one of the few regulated perp platforms available. Bybit and Binance Futures are off-limits for US residents. Deposit stablecoins (USDC/USDT) as margin — not USD directly.
+              <div class="step-callout warn"><div class="step-callout-title">⚠ US Perp Exchange Reality</div>Your realistic options: <strong>Kraken Futures</strong> and <strong>dYdX</strong> (decentralized). Kraken's fees are higher than offshore but it's fully regulated. dYdX is an alternative for more advanced users.</div>
+              <a href="#" class="affiliate-badge">Open Kraken Account →</a>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">3</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Confirm the current BTC funding rate</div>
+            <div class="step-body">
+              Check the live table above before entering. As a rule of thumb:<br><br>
+              <span class="hl">Above 0.01%/8h</span> = worth considering (~11% APY gross)<br>
+              <span style="color:var(--warn)">Above 0.03%/8h</span> = attractive (~33% APY gross)<br>
+              <span style="color:var(--accent2)">Above 0.05%/8h</span> = excellent (~55% APY gross)
+              <div class="step-callout warn"><div class="step-callout-title">⚠ Rates Change</div>Funding rates update every 8 hours based on market sentiment. If the rate goes negative, you pay instead of collect. Monitor daily and exit if it flips and stays negative for 2+ intervals.</div>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">4</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Buy BTC spot on Coinbase Advanced</div>
+            <div class="step-body">
+              Use a <strong>limit order</strong>, not market. Set it 0.01–0.05% below the ask to reduce slippage. Size your position — start small ($1k–$5k) until comfortable. The strategy scales linearly.
+              <div class="step-callout"><div class="step-callout-title">💡 Sizing</div>If deploying $10,000, buy ~0.15 BTC (at current prices). Keep exact BTC amount noted — you need to match it precisely on the perp leg.</div>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">5</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Open an equal BTC-PERP short on Kraken Futures</div>
+            <div class="step-body">
+              Short the exact same BTC amount at <strong>1x leverage</strong>. You are not here to speculate — higher leverage adds liquidation risk with zero upside for this strategy. Use a limit order at current market price.
+              <div class="step-callout red"><div class="step-callout-title">🚨 Match Sizes Exactly</div>If you bought 0.15 BTC spot, short exactly 0.15 BTC perp. Any mismatch creates directional exposure. Double-check the math before confirming.</div>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">6</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Monitor and collect</div>
+            <div class="step-body">
+              Funding hits your Kraken account at <strong>00:00, 08:00, and 16:00 UTC</strong>. Check daily:<br><br>
+              • Funding rate still positive?<br>
+              • Kraken margin ratio healthy?<br>
+              • Spot and perp prices tracking close?
+              <div class="step-callout"><div class="step-callout-title">💡 Exit Order</div>Close the perp short first, then sell spot. This minimizes the window where you have unhedged exposure. Set a calendar reminder to review every 48 hours.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-panel" id="guide-eth">
+      <div class="guide-intro">
+        ETH works identically to BTC but tends to have <strong>higher funding rates during alt-season</strong> and around Ethereum-specific events. Good second position after running the BTC trade successfully. ETH is slightly more volatile so entry threshold should be higher.
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-left"><div class="step-num">1</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Confirm ETH funding rate is attractive</div>
+            <div class="step-body">Look for <span class="hl">0.015%+ per 8h</span> as minimum entry for ETH given slightly higher volatility. ETH rates diverge most during Ethereum upgrades, ETF news cycles, and staking yield changes.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">2</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Buy ETH spot on Coinbase Advanced</div>
+            <div class="step-body">Use a limit order. ETH/USD has excellent liquidity. Size in whole ETH amounts for easier math (e.g., 3 ETH, 5 ETH).</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">3</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Short ETH-PERP on Kraken Futures at 1x</div>
+            <div class="step-body">
+              Match the ETH amount exactly. 1x leverage only.
+              <div class="step-callout warn"><div class="step-callout-title">⚠ ETH Staking Context</div>If ETH staking yield (~3.5% APY) rises, it can compress funding rates. Check the staking rate vs funding rate spread — the trade only makes sense if funding significantly exceeds staking yield.</div>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">4</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Monitor and collect</div>
+            <div class="step-body">Same cadence as BTC. ETH may require slightly more active watching — consider price alerts if ETH moves 10%+ intraday to verify your hedge hasn't drifted.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-panel" id="guide-sol">
+      <div class="guide-intro">
+        SOL funding rates are often the <strong>highest of the major assets</strong> during bull markets — sometimes exceeding 0.05%/8h for extended periods. Higher risk, higher reward. Recommended only after running the BTC trade successfully. SOL is more volatile and perp liquidity is thinner.
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-left"><div class="step-num">1</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Only enter above 0.02%/8h for SOL</div>
+            <div class="step-body">Higher entry threshold (~22% APY gross minimum) to account for wider spreads, higher slippage, and greater volatility risk on both legs.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">2</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Buy SOL spot on Coinbase or Kraken</div>
+            <div class="step-body">Kraken has solid SOL/USD liquidity. Buy in round amounts (50 SOL, 100 SOL) for simpler sizing math on the perp leg.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">3</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Short SOL-PERP at 1x on Kraken Futures</div>
+            <div class="step-body">
+              1x leverage. Keep 50%+ margin cushion above liquidation — SOL's volatility means you need more buffer than with BTC/ETH.
+              <div class="step-callout red"><div class="step-callout-title">🚨 Higher Risk</div>SOL can move 15–20% in a day. This can temporarily squeeze perp margin before spot gains catch up. Keep position size conservative (max 5–10% of portfolio) and hold excess margin on Kraken.</div>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-left"><div class="step-num">4</div><div class="step-line"></div></div>
+          <div class="step-content">
+            <div class="step-title">Monitor twice daily</div>
+            <div class="step-body">Check morning and evening at minimum. SOL funding windows are shorter and rates flip more often. Have a clear exit plan defined before you enter the position.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title">// Risk Factors</div>
+  </div>
+  <div class="risk-grid">
+    <div class="risk-card">
+      <div class="risk-icon">🔄</div>
+      <div class="risk-title green">Funding Rate Flip</div>
+      <div class="risk-desc">Rates change every 8 hours. If sentiment shifts bearish, the rate can go negative — you'd pay rather than collect. Exit both legs promptly if this holds for 2+ intervals.</div>
+    </div>
+    <div class="risk-card">
+      <div class="risk-icon">📉</div>
+      <div class="risk-title yellow">Margin Liquidation</div>
+      <div class="risk-desc">A sharp price drop can squeeze your perp margin before spot gains are realized. Always keep 2x+ required margin and never use more than 1x leverage on the perp leg.</div>
+    </div>
+    <div class="risk-card">
+      <div class="risk-icon">🏦</div>
+      <div class="risk-title red">Exchange Risk</div>
+      <div class="risk-desc">Coinbase spot is as safe as regulated crypto gets. The perp leg on Kraken carries counterparty risk. Never keep more on any exchange than you're prepared to lose entirely.</div>
+    </div>
+  </div>
+
+  <footer>
+    <div>CapyArb — Educational content only. Not financial advice. Funding rates from public exchange APIs.</div>
+    <div class="footer-capy">🦫 Stay calm and arb on.</div>
+  </footer>
+</div>
+
+<script>
+const COINS = [
+  { sym: 'BTC', name: 'Bitcoin',  icon: '₿' },
+  { sym: 'ETH', name: 'Ethereum', icon: 'Ξ' },
+  { sym: 'SOL', name: 'Solana',   icon: '◎' },
+  { sym: 'BNB', name: 'BNB',      icon: 'B' },
+  { sym: 'DOGE', name: 'Dogecoin', icon: 'Ð' },
+];
+
+const rates = {};
+COINS.forEach(c => { rates[c.sym] = {}; });
+
+// ─── FETCH BINANCE FUNDING RATES ─────────────────────────────
+async function fetchBinanceRates() {
+  const map = { BTCUSDT:'BTC', ETHUSDT:'ETH', SOLUSDT:'SOL', BNBUSDT:'BNB', DOGEUSDT:'DOGE' };
+  try {
+    const res = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex');
+    const data = await res.json();
+    data.forEach(item => {
+      const sym = map[item.symbol];
+      if (!sym) return;
+      const rate = parseFloat(item.lastFundingRate) * 100;
+      if (!isNaN(rate)) rates[sym].Binance = rate;
+    });
+    console.log('Binance funding rates loaded');
+    renderRates();
+  } catch(e) {
+    console.warn('Binance funding fetch failed, using fallback', e);
+    useFallbackRates();
+  }
+}
+
+// ─── FETCH BYBIT FUNDING RATES ────────────────────────────────
+async function fetchBybitRates() {
+  const symbols = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','DOGEUSDT'];
+  const map = { BTCUSDT:'BTC', ETHUSDT:'ETH', SOLUSDT:'SOL', BNBUSDT:'BNB', DOGEUSDT:'DOGE' };
+  try {
+    const promises = symbols.map(sym =>
+      fetch(`https://api.bybit.com/v5/market/tickers?category=linear&symbol=${sym}`).then(r => r.json())
+    );
+    const results = await Promise.allSettled(promises);
+    results.forEach((result, i) => {
+      if (result.status !== 'fulfilled') return;
+      const sym = map[symbols[i]];
+      const item = result.value?.result?.list?.[0];
+      if (item && sym) {
+        const rate = parseFloat(item.fundingRate) * 100;
+        if (!isNaN(rate)) rates[sym].Bybit = rate;
+      }
+    });
+    console.log('Bybit funding rates loaded');
+    renderRates();
+  } catch(e) {
+    console.warn('Bybit funding fetch failed', e);
+  }
+}
+
+// ─── FALLBACK ─────────────────────────────────────────────────
+function useFallbackRates() {
+  const base = { BTC:0.0085, ETH:0.0095, SOL:0.0145, BNB:0.0065, DOGE:0.021 };
+  COINS.forEach(c => {
+    rates[c.sym].Binance = base[c.sym] + (Math.random()-0.3)*0.004;
+    rates[c.sym].Bybit   = base[c.sym] + (Math.random()-0.3)*0.005;
+    rates[c.sym].Kraken  = base[c.sym]*0.9 + (Math.random()-0.3)*0.003;
+  });
+  document.getElementById('rates-updated').textContent = 'Simulated (live data unavailable)';
+  renderRates();
+}
+
+function annualize(r) { return r * 3 * 365; }
+
+function getBestRate(sym) {
+  const vals = Object.values(rates[sym]).filter(v => !isNaN(v));
+  return vals.length ? Math.max(...vals) : null;
+}
+
+// ─── RENDER RATE CARDS ────────────────────────────────────────
+function renderRates() {
+  const grid = document.getElementById('rate-grid');
+  const sorted = [...COINS].sort((a,b) => (getBestRate(b.sym)||0) - (getBestRate(a.sym)||0));
+
+  let bestOverall = 0, opportunities = 0;
+
+  grid.innerHTML = sorted.map(c => {
+    const coinRates = rates[c.sym];
+    const entries = Object.entries(coinRates).filter(([,v]) => !isNaN(v));
+    if (!entries.length) return '';
+
+    const best = getBestRate(c.sym);
+    const annAPY = annualize(best);
+    if (annAPY > bestOverall) bestOverall = annAPY;
+    if (best > 0.005) opportunities++;
+
+    const apyClass = annAPY > 20 ? '' : annAPY > 10 ? 'warn' : 'cold';
+    const cardClass = annAPY > 20 ? 'hot' : annAPY > 10 ? 'warm' : '';
+
+    const exConfig = [
+      { key:'Binance', dotClass:'green' },
+      { key:'Bybit',   dotClass:'yellow' },
+      { key:'Kraken',  dotClass:'blue' },
+    ];
+
+    const exRows = exConfig.map(ex => {
+      const r = coinRates[ex.key];
+      if (r === undefined || isNaN(r)) return '';
+      return `<div class="rate-row">
+        <div class="rate-exname"><div class="dot ${ex.dotClass}"></div>${ex.key}</div>
+        <div>
+          <span class="rate-val ${r>0?'bull':'bear'}">${r>0?'+':''}${r.toFixed(4)}%</span>
+          <span style="color:var(--muted);font-size:10px;margin-left:6px;">${annualize(r).toFixed(1)}% APY</span>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="rate-card ${cardClass}" onclick="applyToCalc('${c.sym}',${best})">
+      <div class="rate-card-header">
+        <div class="rate-coin">
+          <div class="rate-icon">${c.icon}</div>
+          <div><div class="rate-sym">${c.sym}</div><div class="rate-name">${c.name}</div></div>
+        </div>
+        <div class="rate-apy">
+          <div class="rate-apy-val ${apyClass}">${annAPY.toFixed(1)}%</div>
+          <div class="rate-apy-label">Est. APY</div>
+        </div>
+      </div>
+      <div class="rate-card-body">${exRows}</div>
+      <div class="rate-card-footer">
+        <div style="color:var(--muted);font-size:10px;">Best: <strong style="color:var(--text)">${best>0?'+':''}${best.toFixed(4)}%/8h</strong></div>
+        <button class="trade-btn">Calc Yield →</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('hero-best-rate').textContent = bestOverall > 0 ? bestOverall.toFixed(1)+'%' : '—';
+  document.getElementById('hero-opportunities').textContent = opportunities;
+  const now = new Date();
+  document.getElementById('rates-updated').textContent = `Updated ${now.toUTCString().split(' ')[4]} UTC`;
+}
+
+// ─── CALCULATOR ───────────────────────────────────────────────
+function applyToCalc(sym, rate) {
+  document.getElementById('calc-asset').value = sym;
+  document.getElementById('calc-rate').value = rate.toFixed(4);
+  recalc();
+  document.querySelector('.calculator').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function recalc() {
+  const size     = parseFloat(document.getElementById('calc-size').value) || 0;
+  const rate8h   = parseFloat(document.getElementById('calc-rate').value) || 0;
+  const spotFee  = parseFloat(document.getElementById('calc-spot-fee').value) || 0;
+  const perpFee  = parseFloat(document.getElementById('calc-perp-fee').value) || 0;
+
+  const rateDecimal = rate8h / 100;
+  const grossAPY = rateDecimal * 3 * 365 * 100;
+  const daily    = size * rateDecimal * 3;
+  const monthly  = daily * 30;
+  const annual   = daily * 365;
+  const fees     = size * ((spotFee + perpFee) / 100) * 2;
+  const netAPY   = ((annual - fees) / size) * 100;
+  const breakEven = fees / (daily || 1);
+
+  const $  = n => '$' + n.toLocaleString('en', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  const pct = n => n.toFixed(2) + '%';
+
+  document.getElementById('out-apy').textContent     = pct(grossAPY);
+  document.getElementById('out-net-apy').textContent = pct(netAPY);
+  document.getElementById('out-daily').textContent   = $(daily);
+  document.getElementById('out-monthly').textContent = $(monthly);
+  document.getElementById('out-annual').textContent  = $(annual);
+  document.getElementById('out-fees').textContent    = '-' + $(fees);
+  document.getElementById('out-breakeven').textContent = breakEven > 0 ? breakEven.toFixed(1)+' days' : '—';
+  document.getElementById('out-net-apy').className = 'output-val ' + (netAPY > 15 ? '' : 'warn');
+}
+
+// ─── TAB SWITCHER ─────────────────────────────────────────────
+function switchTab(btn, panelId) {
+  document.querySelectorAll('.guide-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.guide-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+['calc-size','calc-rate','calc-asset','calc-spot-fee','calc-perp-fee'].forEach(id => {
+  document.getElementById(id).addEventListener('input', recalc);
+});
+
+recalc();
+fetchBinanceRates();
+fetchBybitRates();
+setInterval(() => { fetchBinanceRates(); fetchBybitRates(); }, 5 * 60 * 1000);
+</script>
+</body>
+</html>
