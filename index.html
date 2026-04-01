@@ -319,17 +319,128 @@
   .fr-rate.bear { color: var(--red); }
 
   .whale-item {
-    padding: 11px 0;
+    padding: 11px 16px;
+    margin: 0 -16px;
     border-bottom: 1px solid rgba(30,43,53,0.5);
     display: flex; gap: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
   }
   .whale-item:last-child { border-bottom: none; }
+  .whale-item:hover { background: rgba(0,229,160,0.05); }
   .whale-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
   .whale-text { font-size: 12px; line-height: 1.6; color: var(--muted); }
   .whale-text strong { color: var(--text); }
   .whale-text .hl { color: var(--accent); }
   .whale-text .hl-red { color: var(--red); }
-  .whale-time { font-size: 10px; color: var(--muted); display: block; margin-top: 4px; }
+  .whale-time { font-size: 10px; color: var(--muted); }
+  .whale-track-hint {
+    font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+    color: transparent; transition: color 0.2s; white-space: nowrap;
+  }
+  .whale-item:hover .whale-track-hint { color: var(--accent); }
+  .whale-tracked-star { font-size: 10px; color: var(--warn); margin-left: 5px; }
+
+  /* ─── TRACKED WALLETS PANEL ─────────────────────── */
+  .tracked-wallet-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid rgba(30,43,53,0.5);
+    cursor: pointer; transition: background 0.15s;
+    margin: 0 -16px; padding: 10px 16px;
+  }
+  .tracked-wallet-row:last-child { border-bottom: none; }
+  .tracked-wallet-row:hover { background: rgba(0,229,160,0.04); }
+  .tracked-addr-short { font-size: 11px; color: var(--accent); font-family: 'Space Mono', monospace; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tracked-untrack {
+    flex-shrink: 0; font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted); border: 1px solid var(--border); padding: 3px 8px;
+    border-radius: 3px; background: none; cursor: pointer; font-family: 'Space Mono', monospace;
+    transition: all 0.2s;
+  }
+  .tracked-untrack:hover { border-color: rgba(255,68,102,0.4); color: var(--red); }
+
+  /* ─── WALLET DRAWER ─────────────────────────────── */
+  .drawer-overlay {
+    position: fixed; inset: 0;
+    background: rgba(8,11,15,0.75);
+    z-index: 499; opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: all; }
+
+  .wallet-drawer {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: 440px; max-width: 100vw;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 500;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .wallet-drawer.open { transform: translateX(0); }
+
+  .drawer-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  }
+  .drawer-addr-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .drawer-addr { font-size: 11px; color: var(--accent); word-break: break-all; line-height: 1.6; font-family: 'Space Mono', monospace; }
+  .drawer-close {
+    flex-shrink: 0; background: none; border: 1px solid var(--border);
+    color: var(--muted); padding: 5px 12px; border-radius: 4px; cursor: pointer;
+    font-family: 'Space Mono', monospace; font-size: 10px; transition: all 0.2s;
+  }
+  .drawer-close:hover { border-color: rgba(255,68,102,0.5); color: var(--red); }
+
+  .drawer-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+  .drawer-stat { padding: 14px 16px; border-right: 1px solid var(--border); }
+  .drawer-stat:last-child { border-right: none; }
+  .drawer-stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .drawer-stat-val { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); }
+
+  .drawer-actions {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    display: flex; gap: 8px;
+  }
+  .btn-track {
+    flex: 1; padding: 8px 14px;
+    background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.35);
+    color: var(--accent); border-radius: 4px; cursor: pointer;
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; transition: all 0.2s;
+  }
+  .btn-track:hover { background: rgba(0,229,160,0.16); }
+  .btn-track.tracking { background: rgba(255,204,0,0.08); border-color: rgba(255,204,0,0.35); color: var(--warn); }
+  .btn-explorer {
+    padding: 8px 14px; background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 4px; cursor: pointer;
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; transition: all 0.2s;
+    text-decoration: none; display: inline-flex; align-items: center;
+  }
+  .btn-explorer:hover { border-color: rgba(0,229,160,0.35); color: var(--accent); }
+
+  .drawer-tx-list { flex: 1; overflow-y: auto; }
+  .drawer-tx-list::-webkit-scrollbar { width: 4px; }
+  .drawer-tx-list::-webkit-scrollbar-track { background: var(--surface); }
+  .drawer-tx-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .drawer-tx {
+    padding: 12px 20px; border-bottom: 1px solid rgba(30,43,53,0.5);
+    cursor: pointer; transition: background 0.15s;
+  }
+  .drawer-tx:hover { background: rgba(0,229,160,0.03); }
+  .drawer-tx-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .drawer-tx-hash { font-size: 10px; color: var(--accent); font-family: 'Space Mono', monospace; }
+  .drawer-tx-time { font-size: 9px; color: var(--muted); white-space: nowrap; }
+  .drawer-tx-val { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; margin-top: 5px; }
+  .drawer-tx-val.received { color: var(--accent); }
+  .drawer-tx-val.sent { color: var(--red); }
+  .drawer-loading { padding: 32px 20px; text-align: center; color: var(--muted); font-size: 11px; line-height: 1.8; }
 
   .fg-meter {
     position: relative; height: 6px;
@@ -518,8 +629,15 @@
       </div>
 
       <div class="panel">
-        <div class="panel-header">Whale Alerts <span style="color:var(--muted)">recent txns</span></div>
+        <div class="panel-header">Whale Alerts <span style="color:var(--muted)">click to track</span></div>
         <div class="panel-body" id="whale-body"></div>
+      </div>
+
+      <div class="panel" id="tracked-wallets-panel" style="display:none;">
+        <div class="panel-header">Tracked Wallets <span id="tracked-count" style="color:var(--muted)">0</span></div>
+        <div class="panel-body" id="tracked-wallets-body">
+          <div style="color:var(--muted);font-size:11px;line-height:1.6;">No wallets tracked yet.</div>
+        </div>
       </div>
     </div>
   </div>
@@ -528,6 +646,39 @@
     <div>CapyArb — Live prices from exchange WebSocket feeds. Not financial advice.</div>
     <div class="footer-capy">🦫 Stay calm and arb on.</div>
   </footer>
+</div>
+
+<!-- Wallet tracking drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeWalletDrawer()"></div>
+<div class="wallet-drawer" id="wallet-drawer">
+  <div class="drawer-header">
+    <div style="min-width:0;">
+      <div class="drawer-addr-label">BTC Wallet</div>
+      <div class="drawer-addr" id="drawer-addr">—</div>
+    </div>
+    <button class="drawer-close" onclick="closeWalletDrawer()">✕ Close</button>
+  </div>
+  <div class="drawer-stats">
+    <div class="drawer-stat">
+      <div class="drawer-stat-label">Balance</div>
+      <div class="drawer-stat-val" id="drawer-balance">—</div>
+    </div>
+    <div class="drawer-stat">
+      <div class="drawer-stat-label">Total Txns</div>
+      <div class="drawer-stat-val" id="drawer-ntx">—</div>
+    </div>
+    <div class="drawer-stat">
+      <div class="drawer-stat-label">Total Recv</div>
+      <div class="drawer-stat-val" id="drawer-received">—</div>
+    </div>
+  </div>
+  <div class="drawer-actions">
+    <button class="btn-track" id="btn-track" onclick="toggleTrackWallet()">+ Track Wallet</button>
+    <a class="btn-explorer" id="btn-explorer" href="#" target="_blank" rel="noopener">↗ Explorer</a>
+  </div>
+  <div class="drawer-tx-list" id="drawer-tx-list">
+    <div class="drawer-loading">Select a whale alert to view wallet history.</div>
+  </div>
 </div>
 
 <script>
@@ -1002,11 +1153,17 @@ function formatWhaleAlert(tx) {
     ? `→ <span class="hl-red">${destExchange}</span> — possible sell pressure`
     : `transferred on-chain`;
 
+  // Capture the primary sender address for wallet tracking
+  const fromAddr = (tx.inputs && tx.inputs[0] && tx.inputs[0].prev_out && tx.inputs[0].prev_out.addr)
+    ? tx.inputs[0].prev_out.addr : null;
+
   return {
     icon,
     text: `<strong>${btc >= 100 ? btc.toFixed(0) : btc.toFixed(2)} BTC</strong> (~<span class="hl">${usdFmt}</span>) ${suffix}`,
     time: 'just now',
     ts: Date.now(),
+    txHash: tx.hash || null,
+    fromAddr,
   };
 }
 
@@ -1028,14 +1185,24 @@ function renderWhalePanel() {
     document.getElementById('whale-count').textContent = '—';
     return;
   }
-  body.innerHTML = liveWhales.map(w => `
-    <div class="whale-item">
+  body.innerHTML = liveWhales.map(w => {
+    const isTracked = w.fromAddr && trackedWallets.includes(w.fromAddr);
+    const star = isTracked ? '<span class="whale-tracked-star">★</span>' : '';
+    const hint = w.fromAddr ? '<span class="whale-track-hint">track wallet →</span>' : '';
+    const clickAttr = w.fromAddr
+      ? `onclick="openWalletDrawer('${w.fromAddr}','${w.txHash || ''}')" role="button" tabindex="0"`
+      : '';
+    return `<div class="whale-item" ${clickAttr}>
       <div class="whale-icon">${w.icon}</div>
-      <div>
-        <div class="whale-text">${w.text}</div>
-        <span class="whale-time">${w.time}</span>
+      <div style="flex:1;min-width:0;">
+        <div class="whale-text">${w.text}${star}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+          <span class="whale-time">${w.time}</span>
+          ${hint}
+        </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   document.getElementById('whale-count').textContent = liveWhales.length;
 }
 
@@ -1075,6 +1242,143 @@ function connectWhaleWS() {
     if (el) el.className = 'ws-badge error';
     setTimeout(connectWhaleWS, 10000);
   };
+}
+
+// ─── WALLET TRACKING ──────────────────────────────────────────
+let trackedWallets = JSON.parse(localStorage.getItem('capyTrackedWallets') || '[]');
+let currentDrawerAddr = null;
+
+function openWalletDrawer(address, txHash) {
+  currentDrawerAddr = address;
+
+  document.getElementById('drawer-addr').textContent = address;
+  document.getElementById('drawer-balance').textContent = '—';
+  document.getElementById('drawer-ntx').textContent = '—';
+  document.getElementById('drawer-received').textContent = '—';
+  document.getElementById('drawer-tx-list').innerHTML = '<div class="drawer-loading">Loading wallet data…</div>';
+  document.getElementById('btn-explorer').href = `https://www.blockchain.com/explorer/addresses/btc/${address}`;
+  updateTrackBtn();
+
+  document.getElementById('wallet-drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  fetchWalletData(address);
+}
+
+function closeWalletDrawer() {
+  document.getElementById('wallet-drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function fetchWalletData(address) {
+  try {
+    const res = await fetch(`https://blockchain.info/rawaddr/${address}?limit=25&cors=true`);
+    if (!res.ok) throw new Error('non-200');
+    const data = await res.json();
+    if (currentDrawerAddr !== address) return; // drawer switched
+
+    const balBTC = (data.final_balance / 1e8);
+    const recvBTC = (data.total_received / 1e8);
+    const fmtBTC = v => v >= 1000 ? v.toFixed(0) : v >= 1 ? v.toFixed(3) : v.toFixed(5);
+
+    document.getElementById('drawer-balance').textContent = fmtBTC(balBTC) + ' BTC';
+    document.getElementById('drawer-ntx').textContent = data.n_tx.toLocaleString();
+    document.getElementById('drawer-received').textContent = fmtBTC(recvBTC) + ' BTC';
+
+    renderDrawerTxs(data.txs || [], address);
+  } catch(e) {
+    if (currentDrawerAddr !== address) return;
+    document.getElementById('drawer-tx-list').innerHTML =
+      `<div class="drawer-loading">Could not load data.<br>
+       <a href="https://www.blockchain.com/explorer/addresses/btc/${address}"
+          target="_blank" rel="noopener" style="color:var(--accent);">View on Blockchain Explorer ↗</a></div>`;
+  }
+}
+
+function renderDrawerTxs(txs, address) {
+  if (!txs.length) {
+    document.getElementById('drawer-tx-list').innerHTML = '<div class="drawer-loading">No transactions found.</div>';
+    return;
+  }
+  document.getElementById('drawer-tx-list').innerHTML = txs.map(tx => {
+    // Net value for this address
+    let recv = 0, sent = 0;
+    (tx.inputs || []).forEach(inp => {
+      if (inp.prev_out && inp.prev_out.addr === address) sent += (inp.prev_out.value || 0);
+    });
+    (tx.out || []).forEach(o => {
+      if (o.addr === address) recv += (o.value || 0);
+    });
+    const net = (recv - sent) / 1e8;
+    const sign = net >= 0 ? '+' : '';
+    const cls = net >= 0 ? 'received' : 'sent';
+    const netStr = `${sign}${Math.abs(net) >= 1 ? net.toFixed(4) : net.toFixed(6)} BTC`;
+
+    const d = new Date(tx.time * 1000);
+    const timeStr = d.toLocaleDateString('en', { month: 'short', day: 'numeric' })
+      + ' ' + d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' });
+    const shortHash = tx.hash ? tx.hash.slice(0,8) + '…' + tx.hash.slice(-6) : '—';
+
+    return `<div class="drawer-tx" onclick="window.open('https://www.blockchain.com/explorer/transactions/btc/${tx.hash}','_blank','noopener')">
+      <div class="drawer-tx-row">
+        <span class="drawer-tx-hash">${shortHash}</span>
+        <span class="drawer-tx-time">${timeStr}</span>
+      </div>
+      <div class="drawer-tx-val ${cls}">${netStr}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleTrackWallet() {
+  if (!currentDrawerAddr) return;
+  const idx = trackedWallets.indexOf(currentDrawerAddr);
+  if (idx >= 0) {
+    trackedWallets.splice(idx, 1);
+  } else {
+    trackedWallets.unshift(currentDrawerAddr);
+    if (trackedWallets.length > 12) trackedWallets = trackedWallets.slice(0, 12);
+  }
+  localStorage.setItem('capyTrackedWallets', JSON.stringify(trackedWallets));
+  updateTrackBtn();
+  renderTrackedWallets();
+  renderWhalePanel(); // refresh stars on whale items
+}
+
+function updateTrackBtn() {
+  const btn = document.getElementById('btn-track');
+  const tracked = trackedWallets.includes(currentDrawerAddr);
+  btn.textContent = tracked ? '★ Tracking' : '+ Track Wallet';
+  btn.className = 'btn-track' + (tracked ? ' tracking' : '');
+}
+
+function untrackWallet(address) {
+  trackedWallets = trackedWallets.filter(a => a !== address);
+  localStorage.setItem('capyTrackedWallets', JSON.stringify(trackedWallets));
+  if (currentDrawerAddr === address) updateTrackBtn();
+  renderTrackedWallets();
+  renderWhalePanel();
+}
+
+function renderTrackedWallets() {
+  const panel = document.getElementById('tracked-wallets-panel');
+  const body = document.getElementById('tracked-wallets-body');
+  const countEl = document.getElementById('tracked-count');
+
+  if (!trackedWallets.length) {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = '';
+  countEl.textContent = trackedWallets.length;
+  body.innerHTML = trackedWallets.map(addr => {
+    const short = addr.slice(0, 8) + '…' + addr.slice(-6);
+    return `<div class="tracked-wallet-row" onclick="openWalletDrawer('${addr}','')">
+      <span class="tracked-addr-short">${short}</span>
+      <button class="tracked-untrack" onclick="event.stopPropagation();untrackWallet('${addr}')">✕</button>
+    </div>`;
+  }).join('');
 }
 
 // ─── FEAR & GREED ─────────────────────────────────────────────
@@ -1164,6 +1468,7 @@ function renderAll() {
 renderAll();
 renderFunding();
 renderWhalePanel();
+renderTrackedWallets();
 
 // Connect all WebSockets
 connectCoinbase();
@@ -1193,6 +1498,11 @@ setTimeout(() => {
   if (!wsReady.Binance)  setWsStatus('Binance', 'error');
   if (!wsReady.Kraken)   setWsStatus('Kraken', 'error');
 }, 15000);
+
+// Close drawer on Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeWalletDrawer();
+});
 </script>
 </body>
 </html>
