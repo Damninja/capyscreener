@@ -1256,7 +1256,7 @@ function openWalletDrawer(address, txHash) {
   document.getElementById('drawer-ntx').textContent = '—';
   document.getElementById('drawer-received').textContent = '—';
   document.getElementById('drawer-tx-list').innerHTML = '<div class="drawer-loading">Loading wallet data…</div>';
-  document.getElementById('btn-explorer').href = `https://www.blockchain.com/explorer/addresses/btc/${address}`;
+  document.getElementById('btn-explorer').href = `https://mempool.space/address/${address}`;
   updateTrackBtn();
 
   document.getElementById('wallet-drawer').classList.add('open');
@@ -1273,27 +1273,35 @@ function closeWalletDrawer() {
 }
 
 async function fetchWalletData(address) {
+  const fmtBTC = v => v >= 1000 ? v.toFixed(0) : v >= 1 ? v.toFixed(3) : v.toFixed(5);
   try {
-    const res = await fetch(`https://blockchain.info/rawaddr/${address}?limit=25&cors=true`);
-    if (!res.ok) throw new Error('non-200');
-    const data = await res.json();
-    if (currentDrawerAddr !== address) return; // drawer switched
+    // mempool.space has reliable CORS headers across all devices/networks
+    const [addrRes, txRes] = await Promise.all([
+      fetch(`https://mempool.space/api/address/${address}`),
+      fetch(`https://mempool.space/api/address/${address}/txs`),
+    ]);
+    if (!addrRes.ok) throw new Error('addr non-200');
+    if (currentDrawerAddr !== address) return;
 
-    const balBTC = (data.final_balance / 1e8);
-    const recvBTC = (data.total_received / 1e8);
-    const fmtBTC = v => v >= 1000 ? v.toFixed(0) : v >= 1 ? v.toFixed(3) : v.toFixed(5);
+    const addrData = await addrRes.json();
+    const txs = txRes.ok ? await txRes.json() : [];
+    if (currentDrawerAddr !== address) return;
 
-    document.getElementById('drawer-balance').textContent = fmtBTC(balBTC) + ' BTC';
-    document.getElementById('drawer-ntx').textContent = data.n_tx.toLocaleString();
-    document.getElementById('drawer-received').textContent = fmtBTC(recvBTC) + ' BTC';
+    const stats = addrData.chain_stats || {};
+    const balSats = (stats.funded_txo_sum || 0) - (stats.spent_txo_sum || 0);
+    const recvSats = stats.funded_txo_sum || 0;
 
-    renderDrawerTxs(data.txs || [], address);
+    document.getElementById('drawer-balance').textContent = fmtBTC(balSats / 1e8) + ' BTC';
+    document.getElementById('drawer-ntx').textContent = (stats.tx_count || 0).toLocaleString();
+    document.getElementById('drawer-received').textContent = fmtBTC(recvSats / 1e8) + ' BTC';
+
+    renderDrawerTxs(txs, address);
   } catch(e) {
     if (currentDrawerAddr !== address) return;
     document.getElementById('drawer-tx-list').innerHTML =
       `<div class="drawer-loading">Could not load data.<br>
-       <a href="https://www.blockchain.com/explorer/addresses/btc/${address}"
-          target="_blank" rel="noopener" style="color:var(--accent);">View on Blockchain Explorer ↗</a></div>`;
+       <a href="https://mempool.space/address/${address}"
+          target="_blank" rel="noopener" style="color:var(--accent);">View on mempool.space ↗</a></div>`;
   }
 }
 
@@ -1303,25 +1311,27 @@ function renderDrawerTxs(txs, address) {
     return;
   }
   document.getElementById('drawer-tx-list').innerHTML = txs.map(tx => {
-    // Net value for this address
+    // Net value for this address (mempool.space format)
     let recv = 0, sent = 0;
-    (tx.inputs || []).forEach(inp => {
-      if (inp.prev_out && inp.prev_out.addr === address) sent += (inp.prev_out.value || 0);
+    (tx.vin || []).forEach(inp => {
+      if (inp.prevout && inp.prevout.scriptpubkey_address === address) sent += (inp.prevout.value || 0);
     });
-    (tx.out || []).forEach(o => {
-      if (o.addr === address) recv += (o.value || 0);
+    (tx.vout || []).forEach(o => {
+      if (o.scriptpubkey_address === address) recv += (o.value || 0);
     });
     const net = (recv - sent) / 1e8;
     const sign = net >= 0 ? '+' : '';
     const cls = net >= 0 ? 'received' : 'sent';
     const netStr = `${sign}${Math.abs(net) >= 1 ? net.toFixed(4) : net.toFixed(6)} BTC`;
 
-    const d = new Date(tx.time * 1000);
-    const timeStr = d.toLocaleDateString('en', { month: 'short', day: 'numeric' })
-      + ' ' + d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' });
-    const shortHash = tx.hash ? tx.hash.slice(0,8) + '…' + tx.hash.slice(-6) : '—';
+    const ts = tx.status && tx.status.block_time ? tx.status.block_time : null;
+    const d = ts ? new Date(ts * 1000) : null;
+    const timeStr = d
+      ? d.toLocaleDateString('en', { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })
+      : 'Unconfirmed';
+    const shortHash = tx.txid ? tx.txid.slice(0,8) + '…' + tx.txid.slice(-6) : '—';
 
-    return `<div class="drawer-tx" onclick="window.open('https://www.blockchain.com/explorer/transactions/btc/${tx.hash}','_blank','noopener')">
+    return `<div class="drawer-tx" onclick="window.open('https://mempool.space/tx/${tx.txid}','_blank','noopener')">
       <div class="drawer-tx-row">
         <span class="drawer-tx-hash">${shortHash}</span>
         <span class="drawer-tx-time">${timeStr}</span>
