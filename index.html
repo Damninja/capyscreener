@@ -28,6 +28,7 @@
     color: var(--text);
     font-family: 'Space Mono', monospace;
     font-size: 13px;
+    line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
   }
@@ -55,9 +56,9 @@
 
   header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 0 20px;
+    padding: 16px 0 24px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 24px;
+    margin-bottom: 28px;
   }
 
   .logo { display: flex; align-items: center; gap: 12px; }
@@ -104,8 +105,8 @@
   /* WS STATUS BAR */
   .ws-status-bar {
     display: flex; gap: 8px; align-items: center;
-    margin-bottom: 16px;
-    padding: 8px 12px;
+    margin-bottom: 20px;
+    padding: 10px 14px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 4px;
@@ -127,15 +128,15 @@
 
   /* TOP STATS BAR */
   .stats-bar {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-    margin-bottom: 20px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    margin-bottom: 24px;
   }
 
   .stat-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 14px 16px;
+    padding: 18px 20px;
     position: relative; overflow: hidden;
   }
 
@@ -149,22 +150,22 @@
   .stat-card.gas::before { background: linear-gradient(90deg, var(--warn), var(--accent2)); }
   .stat-card.whale::before { background: linear-gradient(90deg, #aa88ff, #ff6b9d); }
 
-  .stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .stat-label { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
   .stat-value { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 22px; line-height: 1; }
   .stat-value.greed { color: var(--accent2); }
   .stat-value.fear { color: var(--red); }
   .stat-value.neutral { color: var(--warn); }
-  .stat-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .stat-sub { font-size: 10px; color: var(--muted); margin-top: 8px; }
 
   .main-grid {
     display: grid;
     grid-template-columns: 1fr 340px;
-    gap: 16px;
+    gap: 20px;
   }
 
   .section-header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
   }
 
   .section-title {
@@ -180,12 +181,12 @@
 
   .price-table th {
     font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
-    color: var(--muted); padding: 8px 12px; text-align: left;
+    color: var(--muted); padding: 12px 14px; text-align: left;
     border-bottom: 1px solid var(--border);
   }
 
   .price-table td {
-    padding: 12px 12px;
+    padding: 16px 14px;
     border-bottom: 1px solid rgba(30,43,53,0.5);
     vertical-align: middle;
   }
@@ -203,7 +204,7 @@
   }
 
   .coin-ticker { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
-  .coin-full { font-size: 10px; color: var(--muted); }
+  .coin-full { font-size: 10px; color: var(--muted); margin-top: 3px; }
 
   .exchange-prices { display: flex; gap: 8px; align-items: center; }
 
@@ -211,9 +212,9 @@
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 4px;
-    padding: 6px 10px;
+    padding: 8px 12px;
     text-align: center;
-    min-width: 90px;
+    width: 100%;
     transition: border-color 0.3s, background 0.3s;
   }
 
@@ -232,7 +233,7 @@
   .ex-price.flash-up { animation: flashGreen 0.6s ease-out; }
   .ex-price.flash-down { animation: flashRed 0.6s ease-out; }
 
-  .ex-name { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+  .ex-name { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
   .ex-val { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px; }
 
   .arb-badge {
@@ -257,8 +258,8 @@
     background: linear-gradient(135deg, rgba(0,229,160,0.08), rgba(0,229,160,0.02));
     border: 1px solid rgba(0,229,160,0.3);
     border-radius: 6px;
-    padding: 14px 16px;
-    margin-bottom: 16px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
     position: relative; overflow: hidden;
   }
 
@@ -275,23 +276,23 @@
   .arb-profit { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; color: var(--accent); margin-top: 8px; }
   .arb-note { font-size: 10px; color: var(--muted); margin-top: 4px; }
 
-  .sidebar { display: flex; flex-direction: column; gap: 14px; }
+  .sidebar { display: flex; flex-direction: column; gap: 16px; }
 
   .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 
   .panel-header {
-    padding: 10px 14px;
+    padding: 13px 16px;
     border-bottom: 1px solid var(--border);
     font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
     color: var(--accent);
     display: flex; justify-content: space-between; align-items: center;
   }
 
-  .panel-body { padding: 12px 14px; }
+  .panel-body { padding: 16px; }
 
   .gas-row {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 0;
+    padding: 11px 0;
     border-bottom: 1px solid rgba(30,43,53,0.5);
   }
   .gas-row:last-child { border-bottom: none; }
@@ -307,7 +308,7 @@
 
   .funding-row {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 7px 0;
+    padding: 10px 0;
     border-bottom: 1px solid rgba(30,43,53,0.5);
   }
   .funding-row:last-child { border-bottom: none; }
@@ -318,17 +319,17 @@
   .fr-rate.bear { color: var(--red); }
 
   .whale-item {
-    padding: 8px 0;
+    padding: 11px 0;
     border-bottom: 1px solid rgba(30,43,53,0.5);
-    display: flex; gap: 10px;
+    display: flex; gap: 12px;
   }
   .whale-item:last-child { border-bottom: none; }
-  .whale-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
-  .whale-text { font-size: 11px; line-height: 1.5; color: var(--muted); }
+  .whale-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .whale-text { font-size: 12px; line-height: 1.6; color: var(--muted); }
   .whale-text strong { color: var(--text); }
   .whale-text .hl { color: var(--accent); }
   .whale-text .hl-red { color: var(--red); }
-  .whale-time { font-size: 9px; color: var(--muted); display: block; margin-top: 2px; }
+  .whale-time { font-size: 10px; color: var(--muted); display: block; margin-top: 4px; }
 
   .fg-meter {
     position: relative; height: 6px;
@@ -350,16 +351,16 @@
   .fg-score {
     text-align: center; font-family: 'Syne', sans-serif;
     font-weight: 800; font-size: 36px; color: var(--accent2);
-    line-height: 1; margin: 6px 0 2px;
+    line-height: 1; margin: 10px 0 4px;
   }
 
   .fg-label-big {
     text-align: center; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
-    color: var(--accent2); margin-bottom: 8px;
+    color: var(--accent2); margin-bottom: 12px;
   }
 
   footer {
-    margin-top: 24px; padding-top: 16px;
+    margin-top: 32px; padding-top: 20px;
     border-top: 1px solid var(--border);
     display: flex; justify-content: space-between; align-items: center;
     color: var(--muted); font-size: 10px;
@@ -371,8 +372,8 @@
     background: var(--surface);
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
-    overflow: hidden; padding: 8px 0;
-    margin-bottom: 20px;
+    overflow: hidden; padding: 10px 0;
+    margin-bottom: 24px;
   }
 
   .ticker-tape {
@@ -430,6 +431,7 @@
     <span class="ws-badge connecting" id="ws-coinbase"><span class="ws-dot"></span>Coinbase</span>
     <span class="ws-badge connecting" id="ws-binance"><span class="ws-dot"></span>Binance</span>
     <span class="ws-badge connecting" id="ws-kraken"><span class="ws-dot"></span>Kraken</span>
+    <span class="ws-badge connecting" id="ws-blockchain"><span class="ws-dot"></span>Blockchain</span>
   </div>
 
   <div class="ticker-wrap">
@@ -455,7 +457,7 @@
     <div class="stat-card whale">
       <div class="stat-label">Whale Alerts (24h)</div>
       <div class="stat-value" style="color:#aa88ff" id="whale-count">7</div>
-      <div class="stat-sub">transactions &gt; $1M</div>
+      <div class="stat-sub">live BTC txns ≥ 5 BTC</div>
     </div>
   </div>
 
@@ -847,10 +849,10 @@ function renderPriceTable() {
         if (ex === best) cls = 'best';
         else if (ex === worst) cls = 'worst';
       }
-      return `<div class="ex-price ${cls}" id="cell-${c.sym}-${ex}">
+      return `<td><div class="ex-price ${cls}" id="cell-${c.sym}-${ex}">
         <div class="ex-name">${ex.substring(0,3).toUpperCase()}</div>
         <div class="ex-val">${fmt(p)}</div>
-      </div>`;
+      </div></td>`;
     }).join('');
 
     const chgHtml = chg !== null
@@ -867,7 +869,7 @@ function renderPriceTable() {
           </div>
         </div>
       </td>
-      <td colspan="3"><div class="exchange-prices">${exCells}</div></td>
+      ${exCells}
       <td><div class="arb-badge ${arbClass}">${arbLabel}</div></td>
       <td>${chgHtml}</td>
     </tr>`;
@@ -957,16 +959,76 @@ function renderFunding() {
     </div>`).join('');
 }
 
-// ─── WHALES (static/simulated) ────────────────────────────────
-function renderWhales() {
-  const whales = [
-    { icon: '🐋', text: '<strong>3,420 BTC</strong> (~<span class="hl">$230M</span>) moved from unknown wallet → Coinbase', time: '2m ago' },
-    { icon: '🔴', text: '<strong>18,000 ETH</strong> transferred to <span class="hl-red">Binance</span> — possible sell pressure', time: '7m ago' },
-    { icon: '🟢', text: '<strong>$45M USDC</strong> minted on Ethereum — <span class="hl">bullish signal</span>', time: '14m ago' },
-    { icon: '🐋', text: '<strong>1,200 BTC</strong> moved off Kraken to cold storage', time: '22m ago' },
-    { icon: '🔴', text: '<strong>8,500 SOL</strong> moved to <span class="hl-red">exchange</span> — watch for dump', time: '31m ago' },
-  ];
-  document.getElementById('whale-body').innerHTML = whales.map(w => `
+// ─── WHALE ALERTS (live via Blockchain.info mempool WS) ───────
+// Monitors BTC unconfirmed transactions ≥ 5 BTC in real time.
+// No API key required — Blockchain.info provides a free public WS.
+const WHALE_THRESHOLD_SATS = 500_000_000; // 5 BTC in satoshis
+const MAX_WHALE_ALERTS = 8;
+let liveWhales = [];
+
+// A small set of well-known exchange deposit addresses for context labels
+const KNOWN_EXCHANGE_ADDRS = {
+  '3D2oetdNuZUqQHPJmcMDDHYoqkyNVsFk9r': 'Binance',
+  '1NDyJtNTjmwk5xPNhjgAMu4HDHigtobu1s': 'Binance',
+  '34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo': 'Binance',
+  '3Nxwenay9Z8Lc9JBiywExpnEFiLp6Afp8v': 'Kraken',
+  'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh': 'Coinbase',
+  '3FHNBLobJnbCPujupCJye4ap8LkZBUmXGt': 'Coinbase',
+};
+
+function formatWhaleAlert(tx) {
+  if (!tx || !tx.out) return null;
+  const totalSats = tx.out.reduce((sum, o) => sum + (o.value || 0), 0);
+  if (totalSats < WHALE_THRESHOLD_SATS) return null;
+
+  const btc = totalSats / 1e8;
+  const btcPrice = prices['BTC']?.Coinbase || prices['BTC']?.Binance || prices['BTC']?.Kraken || 95000;
+  const usd = btc * btcPrice;
+  const usdFmt = usd >= 1e9 ? `$${(usd/1e9).toFixed(1)}B`
+               : usd >= 1e6 ? `$${(usd/1e6).toFixed(0)}M`
+               : `$${(usd/1e3).toFixed(0)}K`;
+
+  // Check if any output targets a known exchange address
+  let destExchange = null;
+  for (const o of tx.out) {
+    if (o.addr && KNOWN_EXCHANGE_ADDRS[o.addr]) {
+      destExchange = KNOWN_EXCHANGE_ADDRS[o.addr];
+      break;
+    }
+  }
+
+  const icon = destExchange ? '🔴' : '🐋';
+  const suffix = destExchange
+    ? `→ <span class="hl-red">${destExchange}</span> — possible sell pressure`
+    : `transferred on-chain`;
+
+  return {
+    icon,
+    text: `<strong>${btc >= 100 ? btc.toFixed(0) : btc.toFixed(2)} BTC</strong> (~<span class="hl">${usdFmt}</span>) ${suffix}`,
+    time: 'just now',
+    ts: Date.now(),
+  };
+}
+
+function updateWhaleTimes() {
+  const now = Date.now();
+  liveWhales.forEach(w => {
+    const s = Math.floor((now - w.ts) / 1000);
+    if (s < 60) w.time = `${s}s ago`;
+    else if (s < 3600) w.time = `${Math.floor(s/60)}m ago`;
+    else w.time = `${Math.floor(s/3600)}h ago`;
+  });
+}
+
+function renderWhalePanel() {
+  updateWhaleTimes();
+  const body = document.getElementById('whale-body');
+  if (liveWhales.length === 0) {
+    body.innerHTML = `<div style="color:var(--muted);font-size:11px;padding:10px 0;line-height:1.6;">Monitoring BTC mempool for transactions ≥ 5 BTC…</div>`;
+    document.getElementById('whale-count').textContent = '—';
+    return;
+  }
+  body.innerHTML = liveWhales.map(w => `
     <div class="whale-item">
       <div class="whale-icon">${w.icon}</div>
       <div>
@@ -974,7 +1036,45 @@ function renderWhales() {
         <span class="whale-time">${w.time}</span>
       </div>
     </div>`).join('');
-  document.getElementById('whale-count').textContent = whales.length + Math.floor(Math.random()*3);
+  document.getElementById('whale-count').textContent = liveWhales.length;
+}
+
+function connectWhaleWS() {
+  const el = document.getElementById('ws-blockchain');
+  if (el) { el.className = 'ws-badge connecting'; }
+  let ws;
+  try {
+    ws = new WebSocket('wss://ws.blockchain.info/inv');
+  } catch(e) {
+    if (el) el.className = 'ws-badge error';
+    setTimeout(connectWhaleWS, 15000);
+    return;
+  }
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ op: 'unconfirmed_sub' }));
+    if (el) el.className = 'ws-badge connected';
+  };
+
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.op !== 'utx') return;
+      const alert = formatWhaleAlert(msg.x);
+      if (!alert) return;
+      liveWhales.unshift(alert);
+      if (liveWhales.length > MAX_WHALE_ALERTS) liveWhales = liveWhales.slice(0, MAX_WHALE_ALERTS);
+      renderWhalePanel();
+    } catch(err) { /* ignore parse errors */ }
+  };
+
+  ws.onerror = () => {
+    if (el) el.className = 'ws-badge error';
+  };
+  ws.onclose = () => {
+    if (el) el.className = 'ws-badge error';
+    setTimeout(connectWhaleWS, 10000);
+  };
 }
 
 // ─── FEAR & GREED ─────────────────────────────────────────────
@@ -1063,12 +1163,13 @@ function renderAll() {
 // Initial render (will show dashes until WS data arrives)
 renderAll();
 renderFunding();
-renderWhales();
+renderWhalePanel();
 
-// Connect all three WebSockets
+// Connect all WebSockets
 connectCoinbase();
 connectBinance();
 connectKraken();
+connectWhaleWS();
 
 // F&G: real data immediately, refresh every 5 min
 fetchRealFG();
@@ -1077,9 +1178,10 @@ setInterval(fetchRealFG, 5 * 60 * 1000);
 // Gas simulation tick (replace with Etherscan later)
 setInterval(() => { tickGas(); renderGas(); }, 15000);
 
-// Funding/whale refresh (simulated, less frequent)
+// Funding refresh (simulated)
 setInterval(renderFunding, 30000);
-setInterval(renderWhales, 60000);
+// Whale times refresh (live data, just update relative timestamps)
+setInterval(renderWhalePanel, 30000);
 
 // Clock
 updateClock();
